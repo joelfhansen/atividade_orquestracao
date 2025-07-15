@@ -37,24 +37,14 @@ git clone <repo-url>
 cd atividade_orquestracao
 ```
 
-### 4. Dependências Python customizadas
-
-O projeto utiliza dependências Python adicionais para garantir robustez no processamento de dados, especialmente para leitura de arquivos JSON potencialmente malformados. Certifique-se de que os arquivos `requirements-airflow.txt` e `requirements-spark.txt` (Spark) incluem:
-
-```
-json5
-```
-
-O pacote `json5` é fundamental para leitura tolerante de arquivos JSON exportados de sistemas externos, evitando erros de parsing em pipelines Spark e Airflow.
-
-### 5. Build das imagens customizadas
+### 3. Build das imagens customizadas
 **Recomendado:** Sempre rode o build das imagens customizadas antes de subir o ambiente, especialmente após alterações em dependências ou Dockerfiles:
 ```bash
 docker compose build
 ```
 Esse comando garante que todas as dependências (incluindo `json5`) estejam presentes nos containers Airflow e Spark.
 
-### 5. Inicializando o ambiente
+### 4. Inicializando o ambiente
 
 ```bash
 docker compose up -d --build
@@ -84,22 +74,22 @@ Após este comando, o ambiente é preparado automaticamente. Veja o que acontece
 ---
 O ambiente estará pronto para uso, com permissões, chaves SSH, conexões do Airflow e serviços já configurados. Permissões e configurações são automáticas. Só faça ajustes manuais se houver erro de permissão ou acesso.
 
-### 6. Acessando os serviços
+### 5. Acessando os serviços
 - Airflow Webserver: http://localhost:9080
 - Spark Master: http://localhost:8080
 - Spark History Server: http://localhost:18080
 
-### 7. Submetendo jobs Spark via Airflow
+### 6. Submetendo jobs Spark via Airflow
 Para orquestrar jobs Spark via Airflow, utilize as conexões criadas automaticamente:
 - Use a conexão **`spark_master_ssh`** para submeter jobs via **SSHOperator** (execução remota de comandos no Spark Master).
 - Use a conexão **`spark_default`** para submeter jobs via **SparkSubmitOperator** (submissão direta de jobs Spark).
 
-### 8. Logs e eventos
+### 7. Logs e eventos
 - Logs do Airflow: `logs/airflow/`
 - Eventos do Spark: `logs/spark-events/` (usados pelo History Server)
 
 
-### 9. Dicas de troubleshooting
+### 8. Dicas de troubleshooting
 - Consulte os logs dos containers com `docker compose logs <serviço>` para identificar os pontos de falha.
 
 ---
