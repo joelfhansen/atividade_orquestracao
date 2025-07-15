@@ -39,7 +39,18 @@ with DAG(
             enum=pipeline.getXComModes(),
             title="Modo de comunicação entre as tarefas",
         ),
-
+        "transform_type": Param(
+            pipeline.getTransformTypes()[0],
+            type="string",
+            enum=pipeline.getTransformTypes(),
+            title="Tipo de transformação dos dados",
+        ),
+        "debug": Param(
+            False,
+            type="boolean",
+            title="Habilitar modo de depuração",
+            description="Se ativado, o pipeline irá imprimir informações adicionais de depuração durante a execução.",
+        ),
     }
 ) as dag:
 

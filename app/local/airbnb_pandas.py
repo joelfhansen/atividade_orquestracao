@@ -16,6 +16,7 @@ class AirbnbDataPipelinePandas:
     __AVAILABILITY_FILE = os.path.join(__RAW_DIR, 'listing_availability_scrape.json')
     __FINAL_TABLE = os.path.join(__PROCESSED_DIR, 'final_table.parquet')
     __XCOM_MODES = ["CONTENT", "FILEPATH"]
+    __TRANSFORM_TYPES = ["LAKE_READY", "ANALYSIS_READY"]
 
     def __init__(self):
         # Configurar o logger
@@ -41,6 +42,24 @@ class AirbnbDataPipelinePandas:
 
     def getXComModes(self):
         return self.__XCOM_MODES
+    
+    def __getXComMode(self, mode):
+        if mode not in self.__XCOM_MODES:
+            msg = f"Modo de comunicação inválido: {mode}. Deve ser um dos: {self.__XCOM_MODES}."
+            self.__logging.error(msg)
+            raise ValueError(msg)
+        return mode
+
+
+    def getTransformTypes(self):
+        return self.__TRANSFORM_TYPES
+
+    def __getTransformType(self, transform_type):
+        if transform_type not in self.__TRANSFORM_TYPES:
+            msg = f"Tipo de transformação inválido: {transform_type}. Deve ser um dos: {self.__TRANSFORM_TYPES}."
+            self.__logging.error(msg)
+            raise ValueError(msg)
+        return transform_type
 
 
     def __load_sanitized_json_file_as_df(self, filepath):
@@ -115,17 +134,13 @@ class AirbnbDataPipelinePandas:
                 self.__logging.error(msg)
                 raise ValueError(msg)
 
-            self.__show_file_content(listing)
-            self.__show_file_content(availability)
+            if kwargs.get('params', {}).get('debug', False):
+                self.__show_file_content(listing)
+                self.__show_file_content(availability)
             
             ##### 3 - Armazenar o estado #####
             
-            xcom_mode = kwargs.get('params', {}).get('xcom_mode')
-            if xcom_mode not in self.__XCOM_MODES:
-                msg = f"Modo de comunicação inválido: {xcom_mode}. Deve ser um dos: {self.__XCOM_MODES}."
-                self.__logging.error(msg)
-                raise ValueError(msg)
-            
+            xcom_mode = self.__getXComMode(kwargs.get('params', {}).get('xcom_mode'))            
             if xcom_mode == "FILEPATH":
                 # Salvar os DataFrames como arquivos Parquet
                 listing_file_path = os.path.join(self.__PROCESSING_DIR, 'listing.parquet')
@@ -154,12 +169,7 @@ class AirbnbDataPipelinePandas:
     def transform_data(self, **kwargs):
         try:
             ##### 1 - Carregar Estado #####
-            xcom_mode = kwargs.get('params', {}).get('xcom_mode')
-            if xcom_mode not in self.__XCOM_MODES:
-                msg = f"Modo de comunicação inválido: {xcom_mode}. Deve ser um dos: {self.__XCOM_MODES}."
-                self.__logging.error(msg)
-                raise ValueError(msg)
-
+            xcom_mode = self.__getXComMode(kwargs.get('params', {}).get('xcom_mode'))
             if xcom_mode == "CONTENT":
                 # Carregar os DataFrames do XCom
                 listing_content = kwargs['ti'].xcom_pull(key='listing_content', task_ids='ingest_data')
@@ -201,24 +211,44 @@ class AirbnbDataPipelinePandas:
             self.__logging.info(f"Merge realizado com sucesso. Dataframe com {len(merged_df)} registros.")
 
             self.__logging.info("Iniciando a transformação dos dados...")
-            # 1 - separar as colunas dos detalhes do listing
-            listing_df = merged_df.drop(columns=['id', 'listing_id_str', 'airbnb_id', 'listing_dates'])
-            
-            # 2 - Colocar a coluna airbnb_id em primeiro
-            final_df = merged_df['airbnb_id'].to_frame()
-            
-            # 3 - Colocar todas as colunas do listing como subcoluna de uma coluna 'details'
-            final_df['details'] = listing_df.to_dict(orient='records')
-            
-            # 4 - Adicionar 'listing_dates' como nome 'availability_dates'
-            final_df['availability_dates'] = merged_df['listing_dates']
-            final_df = final_df[['airbnb_id', 'details', 'availability_dates']]
-            
+
+            transform_type = self.__getTransformType(kwargs.get('params', {}).get('transform_type'))
+            if transform_type == "LAKE_READY":
+                # 1 - separar as colunas dos detalhes do listing
+                listing_df = merged_df.drop(columns=['id', 'listing_id_str', 'airbnb_id', 'listing_dates'])
+                
+                # 2 - Colocar a coluna airbnb_id em primeiro
+                final_df = merged_df['airbnb_id'].to_frame()
+                
+                # 3 - Colocar todas as colunas do listing como subcoluna de uma coluna 'details'
+                final_df['details'] = listing_df.to_dict(orient='records')
+                
+                # 4 - Adicionar 'listing_dates' como nome 'availability_dates'
+                final_df['availability_dates'] = merged_df['listing_dates']
+                final_df = final_df[['airbnb_id', 'details', 'availability_dates']]
+                
+            elif transform_type == "ANALYSIS_READY":
+                # 1 - Explode a coluna 'listing_dates' para criar um registro por dia de disponibilidade
+                exploded_df = merged_df.explode('listing_dates')
+
+                # 2 - Normalizar os objetos da coluna 'listing_dates' em colunas separadas
+                final_df = pd.json_normalize(exploded_df['listing_dates'])
+                
+                # 3 - Adicionar a coluna 'airbnb_id' ao DataFrame final
+                final_df['airbnb_id'] = exploded_df['airbnb_id'].values
+
+                # 4 - Adicionar as colunas do listing dentro de um objeto details
+                details_df = exploded_df.drop(columns=['id', 'listing_id_str', 'airbnb_id', 'listing_dates'])
+                final_df['details'] = details_df.to_dict(orient='records')
+
+                # 5 - Reorganizar as colunas
+                final_df = final_df[['airbnb_id'] + [col for col in final_df.columns if col not in ['airbnb_id', 'details']] + ['details']]
+                
             # Exibir o conteúdo do DataFrame final
             self.__logging.info("DataFrame final após transformação:")
             self.__logging.info(f"final_df.dtypes:\n{final_df.dtypes}")
             self.__logging.info(f"final_df.shape: {final_df.shape}")
-            
+
             ##### 3 - Armazenar o estado #####
 
             if xcom_mode == "CONTENT":
@@ -241,12 +271,7 @@ class AirbnbDataPipelinePandas:
     def save_final_table(self, **kwargs):
         try:
             ##### 1 - Carregar o Estado #####
-            xcom_mode = kwargs.get('params', {}).get('xcom_mode')
-            if xcom_mode not in self.__XCOM_MODES:
-                msg = f"Modo de comunicação inválido: {xcom_mode}. Deve ser um dos: {self.__XCOM_MODES}."
-                self.__logging.error(msg)
-                raise ValueError(msg)
-                
+            xcom_mode = self.__getXComMode(kwargs.get('params', {}).get('xcom_mode'))                
             if xcom_mode == "CONTENT":
                 final_df_content = kwargs['ti'].xcom_pull(key='final_df_content', task_ids='transform_data')
                 if final_df_content is None:
@@ -262,7 +287,8 @@ class AirbnbDataPipelinePandas:
                     raise ValueError(msg)
                 final_df = pd.read_parquet(final_df_filepath)
             
-            self.__show_file_content(final_df)
+            if kwargs.get('params', {}).get('debug', False):
+                self.__show_file_content(final_df)
 
             ##### 2 - Processar #####
 
