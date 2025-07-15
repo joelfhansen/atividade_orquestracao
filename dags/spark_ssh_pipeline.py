@@ -13,7 +13,7 @@ with DAG(
     default_args=default_args,
     schedule=None,
     catchup=False,
-    tags=['exemplo', 'spark', 'sshoperator-execution'],
+    tags=['exemplo', 'spark', 'ssh-execution'],
     params={
         'transform_type': Param('LAKE_READY', type='string', enum=['LAKE_READY', 'ANALYSIS_READY']),
         'debug': Param(False, type='boolean'),

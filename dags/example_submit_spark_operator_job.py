@@ -8,7 +8,7 @@ default_args = {
     'retries': 0,
 }
 
-with DAG('spark_operator_pipeline',
+with DAG('example_submit_spark_operator_job',
          default_args=default_args,
          tags=['exemplo', 'spark', 'operator-execution'],
          schedule=None,
