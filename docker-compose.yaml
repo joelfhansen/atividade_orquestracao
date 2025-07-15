@@ -40,7 +40,7 @@ x-airflow-common:
     - ${AIRFLOW_PROJ_DIR:-.}/data:/opt/airflow/data
     - ${AIRFLOW_PROJ_DIR:-.}/app:/opt/airflow/app
     - ${AIRFLOW_PROJ_DIR:-.}/ssh:/opt/airflow/ssh
-  user: "${AIRFLOW_UID:-50000}:0"
+  user: "185:0"
   depends_on:
     &airflow-common-depends-on
     redis:
@@ -187,16 +187,6 @@ services:
     command:
       - -c
       - |
-        if [[ -z "${AIRFLOW_UID}" ]]; then
-          echo
-          echo -e "\033[1;33mWARNING!!!: AIRFLOW_UID not set!\e[0m"
-          echo "If you are on Linux, you SHOULD follow the instructions below to set "
-          echo "AIRFLOW_UID environment variable, otherwise files will be owned by root."
-          echo "For other operating systems you can get rid of the warning with manually created .env file:"
-          echo "    See: https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html#setting-the-right-airflow-user"
-          echo
-          export AIRFLOW_UID=$(id -u)
-        fi
         one_meg=1048576
         mem_available=$$(($$(getconf _PHYS_PAGES) * $$(getconf PAGE_SIZE) / one_meg))
         cpus_available=$$(grep -cE 'cpu[0-9]+' /proc/stat)
@@ -250,13 +240,13 @@ services:
         echo
         ls -la /opt/airflow/{logs,dags,plugins,config}
         echo
-        echo "Change ownership of files in /opt/airflow to ${AIRFLOW_UID}:0"
+        echo "Change ownership of files in /opt/airflow to 185:0"
         echo
-        chown -R "${AIRFLOW_UID}:0" /opt/airflow/
+        chown -R "185:0" /opt/airflow/
         echo
-        echo "Change ownership of files in shared volumes to ${AIRFLOW_UID}:0"
+        echo "Change ownership of files in shared volumes to 185:0"
         echo
-        chown -v -R "${AIRFLOW_UID}:0" /opt/airflow/{logs,dags,plugins,config}
+        chown -v -R "185:0" /opt/airflow/{logs,dags,plugins,config}
         echo
         echo "Files in shared volumes:"
         echo
@@ -274,7 +264,7 @@ services:
       _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
       _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
       _PIP_ADDITIONAL_REQUIREMENTS: ''
-      AIRFLOW_UID: ${AIRFLOW_UID:-50000}
+      AIRFLOW_UID: 185
     user: "0:0"
     depends_on:
       environment-configurator:
@@ -329,14 +319,14 @@ services:
       dockerfile: Dockerfile.environment-configurator
     command: >
       /bin/bash -c "mkdir -p /opt/airflow/logs/airflow && \
-                    chown -R ${AIRFLOW_UID:-50000}:0 /opt/airflow/logs && \
+                    chown -R 185:0 /opt/airflow/logs && \
                     chmod -R 770 /opt/airflow/logs && \
                     mkdir -p /opt/airflow/logs/spark-events && \
-                    chown -R ${SPARK_UID:-185}:0 /opt/airflow/logs/spark-events && \
+                    chown -R 185:0 /opt/airflow/logs/spark-events && \
                     chmod -R 770 /opt/airflow/logs/spark-events && \
                     rm -rf /opt/airflow/ssh/* && \
                     ssh-keygen -t rsa -b 4096 -f /opt/airflow/ssh/id_rsa -N '' && \
-                    chown ${AIRFLOW_UID:-50000}:0 /opt/airflow/ssh/id_rsa /opt/airflow/ssh/id_rsa.pub && \
+                    chown 185:0 /opt/airflow/ssh/id_rsa /opt/airflow/ssh/id_rsa.pub && \
                     chmod 640 /opt/airflow/ssh/id_rsa /opt/airflow/ssh/id_rsa.pub"      
     volumes:
       - ./logs:/opt/airflow/logs
