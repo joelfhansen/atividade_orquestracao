@@ -1,3 +1,23 @@
+## Estrutura do projeto e função de cada componente
+
+Este projeto cria um ambiente completo para orquestração de pipelines via Airflow, com todos os componentes integrados e prontos para uso. Atualmente permite processamento Spark através do Airflow,e também processamento Python dentro do próprio airflow, utilizando Pandas por exemplo. Veja o que é criado e para que serve cada parte:
+
+- **Airflow**: Orquestrador de pipelines ETL, responsável por agendar, monitorar e executar tarefas. Inclui Webserver, Scheduler, Worker, Triggerer, Dag Processor e API Server.
+- **Spark Master**: Gerencia os recursos e distribui os jobs Spark para os Workers.
+- **Spark Workers**: Executam os jobs Spark submetidos pelo Master.
+- **Spark History Server**: Permite visualizar o histórico de execução dos jobs Spark, usando os arquivos de eventos gerados.
+- **Postgres**: Banco de dados usado pelo Airflow para persistência de metadados e estado das tarefas.
+- **Redis**: Broker de mensagens para o CeleryExecutor do Airflow, gerenciando filas de tarefas distribuídas.
+- **Flower**: Interface web para monitoramento dos workers Celery do Airflow.
+- **Environment Configurator**: Serviço responsável por criar as pastas compartilhadas, ajustar permissões e gerar as chaves SSH usadas na comunicação segura entre Airflow e Spark.
+- **Volumes compartilhados**:
+  - `logs/airflow`: Armazena logs de execução do Airflow.
+  - `logs/spark-events`: Armazena arquivos de eventos dos jobs Spark, usados pelo History Server.
+  - `ssh`: Guarda as chaves SSH para autenticação entre Airflow e Spark Master.
+  - `dags`, `plugins`, `config`, `app`, `data`: Pastas para DAGs, plugins, configurações, scripts e dados usados nos pipelines.
+
+Todos esses componentes são integrados via Docker Compose, com dependências e healthchecks para garantir que o ambiente esteja sempre pronto para uso.
+
 ## Instruções para configurar e iniciar o ambiente Airflow + Spark
 
 ### 1. Pré-requisitos
@@ -65,11 +85,12 @@ O ambiente estará pronto para uso, com permissões, chaves SSH, conexões do Ai
 ### 6. Acessando os serviços
 - Airflow Webserver: http://localhost:9080
 - Spark Master: http://localhost:8080
-- Spark History Server: http://localhost:8081
+- Spark History Server: http://localhost:18080
 
 ### 7. Submetendo jobs Spark via Airflow
-- Configure a conexão SSH no Airflow (`spark_master_ssh`) apontando para o Spark Master.
-- Use DAGs com SSHOperator ou SparkSubmitOperator para orquestrar jobs Spark.
+Para orquestrar jobs Spark via Airflow, utilize as conexões criadas automaticamente:
+- Use a conexão **`spark_master_ssh`** para submeter jobs via **SSHOperator** (execução remota de comandos no Spark Master).
+- Use a conexão **`spark_default`** para submeter jobs via **SparkSubmitOperator** (submissão direta de jobs Spark).
 
 ### 8. Logs e eventos
 - Logs do Airflow: `logs/airflow/`

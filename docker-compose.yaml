@@ -277,7 +277,7 @@ services:
     user: "0:0"
     depends_on:
       environment-configurator:
-        condition: service_healthy
+        condition: service_completed_successfully
     networks:
       - airflow-net
 
@@ -336,22 +336,13 @@ services:
                     apt-get install -y openssh-client && \
                     ssh-keygen -t rsa -b 4096 -f /opt/airflow/ssh/id_rsa -N '' && \
                     chown ${AIRFLOW_UID:-50000}:0 /opt/airflow/ssh/id_rsa /opt/airflow/ssh/id_rsa.pub && \
-                    chmod 640 /opt/airflow/ssh/id_rsa /opt/airflow/ssh/id_rsa.pub && \
-                    tail -f /dev/null"
-      
+                    chmod 640 /opt/airflow/ssh/id_rsa /opt/airflow/ssh/id_rsa.pub"      
     volumes:
       - ./logs:/opt/airflow/logs
       - ./ssh:/opt/airflow/ssh
     networks:
       - airflow-net
-    healthcheck:
-      test: ["CMD", "cat", "/opt/airflow/ssh/id_rsa.pub"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 1m
-
-
+    
 
   spark-master:
     build:
@@ -365,18 +356,14 @@ services:
       - SPARK_EVENTLOG_ENABLED=true
       - SPARK_EVENTLOG_DIR=/opt/spark-events
     ports:
-      - "7077:7077"
       - "8080:8080"
-      - "6066:6066"
-      - "2222:22"
-      - "4040:4040"
     volumes:
       - ./app:/opt/airflow/app
       - ./ssh:/opt/airflow/ssh
       - ./logs/spark-events:/opt/spark-events
     depends_on:
       environment-configurator:
-        condition: service_healthy
+        condition: service_completed_successfully
     networks:
       - airflow-net
 
