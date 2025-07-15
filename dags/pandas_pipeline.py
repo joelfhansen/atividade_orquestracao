@@ -1,9 +1,12 @@
-import sys
+import sys, os
 from datetime import datetime
 from airflow import DAG
 from airflow.models import Param
 from airflow.operators.python import PythonOperator
-from app.airbnb_pandas import AirbnbDataPipelinePandas
+
+sys.path.append('/opt/airflow/app')
+from local.airbnb_pandas import AirbnbDataPipelinePandas
+
 
 pipeline = AirbnbDataPipelinePandas()
 

@@ -1,5 +1,6 @@
 from airflow import DAG
 from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
+from airflow.operators.bash import BashOperator
 from datetime import datetime
 
 default_args = {
@@ -27,3 +28,10 @@ with DAG('spark_operator_pipeline',
         },
         application_args=[],
     )
+
+    allow_events_task = BashOperator(
+        task_id='finalize_spark_job',
+        bash_command='chmod 664 /opt/airflow/spark-events/*',
+    )
+
+    spark_task >> allow_events_task
