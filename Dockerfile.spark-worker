@@ -1,0 +1,19 @@
+# check=skip=JSONArgsRecommended
+FROM apache/spark:3.5.4-java17-python3
+
+USER root
+
+RUN mkdir /home/spark
+RUN chown -R 185:185 /home/spark
+
+USER 185 
+
+COPY requirements-spark.txt .
+
+RUN pip install \
+    --trusted-host pypi.org \
+    --trusted-host files.pythonhosted.org \
+    --trusted-host pypi.python.org \
+    --disable-pip-version-check \
+    --no-cache-dir \
+    -r requirements-spark.txt

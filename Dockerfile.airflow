@@ -33,7 +33,13 @@ RUN pip install --no-cache-dir apache-airflow-providers-apache-spark pyspark==3.
 
 FROM airflow_providers AS airflow_requirements
 
-COPY requirements.txt .
+COPY requirements-airflow.txt .
 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install \
+    --trusted-host pypi.org \
+    --trusted-host files.pythonhosted.org \
+    --trusted-host pypi.python.org \
+    --disable-pip-version-check \
+    --no-cache-dir \
+    -r requirements-airflow.txt
 

@@ -16,7 +16,7 @@ with DAG('spark_operator_pipeline',
 ) as dag:
 
     spark_task = SparkSubmitOperator(
-        task_id='submit_spark_job',
+        task_id='example_submit_spark_operator_job',
         application='/opt/airflow/app/spark/job_exemplo.py',
         conn_id='spark_default',
         #verbose=True,

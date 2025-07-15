@@ -350,6 +350,7 @@ services:
       - "8080:8080"
     volumes:
       - ./app:/opt/airflow/app
+      - ./data:/opt/airflow/data
       - ./ssh:/opt/airflow/ssh
       - ./logs/spark-events:/opt/spark-events
     depends_on:
@@ -359,7 +360,10 @@ services:
       - airflow-net
 
   spark-worker:
-    image: apache/spark:3.5.4-java17-python3
+    #image: apache/spark:3.5.4-java17-python3
+    build:
+      context: .
+      dockerfile: Dockerfile.spark-worker
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
     deploy:
       replicas: 2
@@ -370,7 +374,8 @@ services:
       - SPARK_EVENTLOG_ENABLED=true
       - SPARK_EVENTLOG_DIR=/opt/spark-events
     volumes:
-      - ./app:/opt/airflow/app
+      - ./app:/opt/airflow/app      
+      - ./data:/opt/airflow/data
       - ./logs/spark-events:/opt/spark-events
     depends_on:
       - spark-master
