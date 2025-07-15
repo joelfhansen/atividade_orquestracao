@@ -11,5 +11,5 @@ airflow connections add 'spark_master_ssh' \
     --conn-type 'ssh' \
     --conn-host 'spark-master' \
     --conn-port '22' \
-    --conn-login 'root' \
+    --conn-login 'spark' \
     --conn-extra '{"key_file": "/opt/airflow/ssh/id_rsa"}'

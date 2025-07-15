@@ -274,6 +274,7 @@ services:
       _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
       _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
       _PIP_ADDITIONAL_REQUIREMENTS: ''
+      AIRFLOW_UID: ${AIRFLOW_UID:-50000}
     user: "0:0"
     depends_on:
       environment-configurator:
@@ -323,7 +324,9 @@ services:
       - airflow-net
 
   environment-configurator:
-    image: ubuntu:24.04
+    build:
+      context: .
+      dockerfile: Dockerfile.environment-configurator
     command: >
       /bin/bash -c "mkdir -p /opt/airflow/logs/airflow && \
                     chown -R ${AIRFLOW_UID:-50000}:0 /opt/airflow/logs && \
@@ -332,8 +335,6 @@ services:
                     chown -R ${SPARK_UID:-185}:0 /opt/airflow/logs/spark-events && \
                     chmod -R 770 /opt/airflow/logs/spark-events && \
                     rm -rf /opt/airflow/ssh/* && \
-                    apt-get update && \
-                    apt-get install -y openssh-client && \
                     ssh-keygen -t rsa -b 4096 -f /opt/airflow/ssh/id_rsa -N '' && \
                     chown ${AIRFLOW_UID:-50000}:0 /opt/airflow/ssh/id_rsa /opt/airflow/ssh/id_rsa.pub && \
                     chmod 640 /opt/airflow/ssh/id_rsa /opt/airflow/ssh/id_rsa.pub"      

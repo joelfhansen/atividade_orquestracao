@@ -17,7 +17,12 @@ with DAG('spark_pipeline_ssh',
     spark_ssh_task = SSHOperator(
         task_id='submit_spark_job_ssh',
         ssh_conn_id='spark_master_ssh',  # Defina essa conexão no Airflow
-        command='export JAVA_HOME=/opt/java/openjdk && /opt/spark/bin/spark-submit --master spark://spark-master:7077 /opt/airflow/app/spark/job_exemplo.py',
+        command='export JAVA_HOME=/opt/java/openjdk && \
+                 /opt/spark/bin/spark-submit \
+                 --master spark://spark-master:7077 \
+                 --conf spark.eventLog.enabled=true \
+                 --conf spark.eventLog.dir=/opt/spark-events \
+                 /opt/airflow/app/spark/job_exemplo.py',
         do_xcom_push=True,
         cmd_timeout=600
         
