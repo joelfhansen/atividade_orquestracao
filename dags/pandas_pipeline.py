@@ -24,7 +24,7 @@ default_args = {
 
 
 with DAG(
-    dag_id='pipeline_final',
+    dag_id='pandas_pipeline',
     default_args=default_args,
     schedule=None,
     catchup=False,

@@ -1,5 +1,7 @@
 # Atividade Prática: Orquestração de Pipelines com Dados JSON
 
+Resultado da atividade: [Consulte as instruções detalhadas de configuração e execução](INSTRUCTIONS.md).
+
 ## Objetivo
 
 O objetivo desta atividade é praticar o uso de uma ferramenta de orquestração (como Apache Airflow, Prefect, Mage ou outras) para construir um pipeline simples com três etapas principais:

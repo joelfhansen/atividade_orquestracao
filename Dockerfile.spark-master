@@ -1,4 +1,5 @@
-FROM apache/spark:3.5.4
+# check=skip=JSONArgsRecommended
+FROM apache/spark:3.5.4-java17-python3
 
 USER root
 #COPY ssh /tmp/ssh

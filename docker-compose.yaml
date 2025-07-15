@@ -1,4 +1,4 @@
----
+
 x-airflow-common:
   &airflow-common
   # In order to add custom dependencies or upgrade provider distributions you can use your extended image.
@@ -34,6 +34,7 @@ x-airflow-common:
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
     - ${AIRFLOW_PROJ_DIR:-.}/logs/airflow:/opt/airflow/logs
+    - ${AIRFLOW_PROJ_DIR:-.}/logs/spark-events:/opt/airflow/spark-events
     - ${AIRFLOW_PROJ_DIR:-.}/config:/opt/airflow/config
     - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
     - ${AIRFLOW_PROJ_DIR:-.}/data:/opt/airflow/data
@@ -327,6 +328,9 @@ services:
       /bin/bash -c "mkdir -p /opt/airflow/logs/airflow && \
                     chown -R ${AIRFLOW_UID:-50000}:0 /opt/airflow/logs && \
                     chmod -R 770 /opt/airflow/logs && \
+                    mkdir -p /opt/airflow/logs/spark-events && \
+                    chown -R ${SPARK_UID:-185}:0 /opt/airflow/logs/spark-events && \
+                    chmod -R 770 /opt/airflow/logs/spark-events && \
                     rm -rf /opt/airflow/ssh/* && \
                     apt-get update && \
                     apt-get install -y openssh-client && \
@@ -377,7 +381,7 @@ services:
       - airflow-net
 
   spark-worker:
-    image: apache/spark:3.5.4
+    image: apache/spark:3.5.4-java17-python3
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
     deploy:
       replicas: 2
@@ -396,7 +400,7 @@ services:
       - airflow-net
   
   spark-history-server:
-    image: apache/spark:3.5.4
+    image: apache/spark:3.5.4-java17-python3
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.history.HistoryServer
     environment:
       - SPARK_HISTORY_OPTS=-Dspark.history.fs.logDirectory=/opt/spark-events

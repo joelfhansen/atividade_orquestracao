@@ -1,4 +1,4 @@
-FROM apache/airflow:3.0.2-python3.12 AS airflow_base
+FROM apache/airflow:3.0.3-python3.10 AS airflow_base
 
 #RUN apt-get update 
 

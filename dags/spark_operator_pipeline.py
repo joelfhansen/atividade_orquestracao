@@ -4,11 +4,12 @@ from datetime import datetime
 
 default_args = {
     'start_date': datetime(2025, 1, 1),
-    'retries': 1,
+    'retries': 0,
 }
 
-with DAG('teste_operator_spark_pipeline_dag',
+with DAG('spark_operator_pipeline',
          default_args=default_args,
+         tags=['exemplo', 'spark', 'operator-execution'],
          schedule=None,
          catchup=False
 ) as dag:
@@ -21,8 +22,8 @@ with DAG('teste_operator_spark_pipeline_dag',
         name='ExemploSparkJob',
         conf={
             'spark.master': 'spark://spark-master:7077',
-            # 'spark.eventLog.enabled': 'true',
-            # 'spark.eventLog.dir': '/tmp/spark-events'
+            'spark.eventLog.enabled': 'true',
+            'spark.eventLog.dir': '/opt/airflow/spark-events'
         },
         application_args=[],
     )

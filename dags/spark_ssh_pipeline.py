@@ -4,11 +4,12 @@ from datetime import datetime
 
 default_args = {
     'start_date': datetime(2025, 1, 1),
-    'retries': 1,
+    'retries': 0,
 }
 
 with DAG('spark_pipeline_ssh',
          default_args=default_args,
+         tags=['exemplo', 'spark', 'ssh-execution'],
          schedule=None,
          catchup=False
 ) as dag:
