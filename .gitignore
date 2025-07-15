@@ -1,0 +1,7 @@
+db
+logs
+ssh
+.env
+**/__pycache__/
+data/processing
+data/processed

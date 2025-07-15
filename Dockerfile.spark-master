@@ -1,0 +1,21 @@
+FROM apache/spark:3.5.4
+
+USER root
+#COPY ssh /tmp/ssh
+
+RUN apt-get update && apt-get install -y openssh-server && \
+    mkdir /var/run/sshd && \
+    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
+    sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    ssh-keygen -A && \
+    mkdir -p /root/.ssh && \
+    chmod 700 /root/.ssh && \
+    touch /root/.ssh/authorized_keys && \
+    chmod 600 /root/.ssh/authorized_keys
+
+RUN echo "export JAVA_HOME=$(printenv JAVA_HOME)" >> /root/.bashrc && \
+    echo 'export PATH=$JAVA_HOME/bin:$PATH' >> /root/.bashrc
+
+EXPOSE 22 7077 8080 6066
+
+CMD cat /opt/airflow/ssh/id_rsa.pub >> /root/.ssh/authorized_keys && service ssh start && /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master --host 0.0.0.0
